@@ -42,6 +42,20 @@ def approval_program():
     def withdraw():
         pass
 
+    @Subroutine(TealType.none)
+    def sendPayment(receiver, amount_in_algo, close_to_receiver):
+        return Seq([
+            InnerTxnBuilder.Begin(),
+            InnerTxnBuilder.SetFields({
+                TxnField.type_enum: TxnType.Payment, # specifies the type of transacion been made (paymnet, application_call, etc)
+                TxnField.amount: amount_in_algo - (Global.min_txn_fee() + Global.min_balance()), # we subtract the cost for making the call (gas fee) and the minimum amount of algo that must be in an algorand account
+                TxnField.sender: Global.current_application_address(), # The sender of this payment is the smart contract escrow address
+                TxnField.receiver: receiver, # Funds receiver
+                TxnField.close_remainder_to: close_to_receiver # address to send the remaining algo in the escrow account to
+            }),
+            InnerTxnBuilder.Submit()
+        ])
+
     return contract_events(
         delete_contract=delete_app(),
         initialize_contract=initialize_app(),
