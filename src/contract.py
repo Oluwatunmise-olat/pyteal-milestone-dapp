@@ -4,13 +4,27 @@ from contract_helpers import contract_events
 def approval_program():
 
     # App Global States
-
     op_set_state = Bytes("set_state")
     op_accept = Bytes("accept")
     op_decline = Bytes("decline")
     op_submit = Bytes("submit")
     op_withdraw = Bytes("withdraw")
     op_refund = Bytes("refund")
+
+    # App Global Schemas (byteslice | uint64)
+    global_creator = Bytes("global_creator") # byteslice [the deployer of the contract address]
+    global_start_date = Bytes("start_date") # unint64 [time the milestone is to start]
+    global_end_date = Bytes("end_date") # unint64 [time the milestone is to end]
+    global_amount = Bytes("amount") # unint64 [amont to be paid in algo for milestone]
+    global_altimatum = Bytes("altimatum") # unint64 [time the client has to review submission and accept or decline after freelancer submission]
+
+    global_client = Bytes("client") # byteslice
+    global_freelancer = Bytes("freelancer") # byteslice
+
+    global_submission_date = Bytes("submission_date") # unit64 [when the freelancer submitted the work for review]
+    global_submitted = Bytes("submit") # byteslice
+    global_sent = Bytes("sent") # byteslice [status of payment]
+
 
     def initialize_app():
         pass
