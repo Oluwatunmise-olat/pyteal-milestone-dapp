@@ -163,7 +163,22 @@ def approval_program():
         # altimatum time must have beem exceeded
         # freelancer must have submitted work
         # payment hasn't been made by client
-        pass
+        return Seq([
+            Assert(
+                And(
+                    Txn.sender() == App.globalGet(global_freelancer),
+                    App.globalGet(global_submitted) == Bytes("True"),
+                    App.globalGet(global_sent) == Bytes("False"), # assert that the payment hasn't be made
+                    Txn.application_args.length() == Int(1),
+                    Txn.group_index() == Int(0),
+                    App.globalGet(global_altimatum) != Int(0),
+                    Global.latest_timestamp() >= App.globalGet(global_altimatum)
+                )
+            ),
+            sendPayment(Txn.sender(), App.globalGet(global_amount), Txn.sender()),
+            App.globalPut(global_sent, Bytes("True")),
+            Approve()
+        ])
 
     @Subroutine(TealType.none)
     def sendPayment(receiver, amount_in_algo, close_to_receiver):
