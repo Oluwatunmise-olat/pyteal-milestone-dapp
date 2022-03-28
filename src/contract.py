@@ -109,7 +109,21 @@ def approval_program():
     @Subroutine(TealType.none)
     def accept():
         # case of client accpeting the milestone
-        pass
+        return Seq([
+            Assert(
+                And(
+                    App.globalGet(global_submitted) == Bytes("True"), # the freelancer must have submitted
+                    Txn.sender() == App.globalGet(global_client), # assert the call is made by the client
+                    App.globalGet(global_sent) == Bytes("False"), # assert that the payment hasn't been previously made
+                    Txn.application_args.length() == Int(1),
+                    Txn.group_index() == Int(0),
+                    Txn.accounts[1] == App.globalGet(global_client)
+                )
+            ),
+            sendPayment(Txn.accounts[1],App.globalGet(global_amount), Txn.accounts[1]), # send payments to freelancer
+            App.globalPut(global_sent, Bytes("True")), # we set the status of payment to true
+            Approve()
+        ])
 
     @Subroutine()
     def decline():
