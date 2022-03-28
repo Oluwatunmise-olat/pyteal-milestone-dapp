@@ -79,3 +79,39 @@ class TransactionService:
     algod_client = WebService.algod_client
     deployer_private_key = WebService.get_deployer_private_key
     deployer_address = WebService.get_address_from_pk(deployer_private_key)
+
+    
+    def create_contract(self):
+        pass
+
+    def wait_for_confirmation(self):
+        pass
+
+    def set_up_call(self):
+        pass
+
+    def no_op_call(self):
+        pass
+
+    def submit_call(self):
+        pass
+
+    def accept_call(self):
+        pass
+
+    def refund_call(self):
+        pass
+
+    def withdraw_call(self):
+        pass
+
+    def delete_call(self):
+        pass
+
+    def payment_transaction(self):
+        pass
+
+
+
+
+
