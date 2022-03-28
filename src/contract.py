@@ -127,8 +127,12 @@ def approval_program():
             Approve()
         ])
 
-    @Subroutine()
+    @Subroutine(TealType.none)
     def decline():
+        # work must have been submitted
+        # payment should not have been made
+        # 60% of amount is sent to client
+        # 40% of amount is sent to freelancer
         pass
 
     @Subroutine(TealType.none)
