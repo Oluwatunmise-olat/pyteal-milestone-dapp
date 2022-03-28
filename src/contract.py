@@ -80,11 +80,32 @@ def approval_program():
         ])
 
     @Subroutine(TealType.none)
-    def accept():
-        pass
+    def submit():
+        return Seq([
+            Assert(
+                And(
+                    Txn.sender() == App.globalGet(global_freelancer), # the transaction sender must be the freelancer associated with the contract
+                    App.globalGet(global_start_date) != Int(0), # assert that the milestone has started and been set
+                    App.globalGet(global_end_date) != Int(0),
+                    App.globalGet(global_submitted) == Bytes("False"), # assert that the submission has not beem previously made
+                    App.globalGet(global_sent) == Bytes("False"), # assert that the payment hasn't beem made
+                    Txn.application_args[1] == Bytes("True"), # assert that the second argumnet equals True to set submission status
+                    Txn.application_args.length() == Int(2),
+
+                    App.globalGet(global_start_date < Global.latest_timestamp()), # assert the start date is less than current date time
+                    App.globalGet(global_end_date >= Global.latest_timestamp()), # assert that the enddate is greater than the current date time
+                
+                )
+            ),
+            App.globalPut(global_submitted, Txn.application_args[1]), # we set the submission status to true
+            App.globalPut(global_submission_date, Global.latest_timestamp()), # we set the submission date
+            # check here -->
+            App.globalPut(global_altimatum, Global.latest_timestamp() + Int(7)), # we set the altimatum date (7 days)
+            Approve()
+        ])
 
     @Subroutine(TealType.none)
-    def submit():
+    def accept():
         pass
 
     @Subroutine()
@@ -119,8 +140,8 @@ def approval_program():
         no_op_contract=Seq([
             Cond(
                 [Txn.application_args[0] == op_set_state, set_state()],
-                [Txn.application_args[0] == op_accept, accept()],
                 [Txn.application_args[0] == op_submit, submit()],
+                [Txn.application_args[0] == op_accept, accept()],
                 [Txn.application_args[0] == op_decline, decline()],
                 [Txn.application_args[0] == op_refund, refund()]
                 [Txn.application_args[0] == op_withdraw, withdraw()],
