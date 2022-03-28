@@ -18,15 +18,15 @@ def approval_program():
     def delete_app():
         pass
 
-    @Subroutine()
+    @Subroutine(TealType.none)
     def set_state():
         pass
 
-    @Subroutine()
+    @Subroutine(TealType.none)
     def accept():
         pass
 
-    @Subroutine()
+    @Subroutine(TealType.none)
     def submit():
         pass
 
@@ -34,11 +34,11 @@ def approval_program():
     def decline():
         pass
 
-    @Subroutine()
+    @Subroutine(TealType.none)
     def refund():
         pass
 
-    @Subroutine()
+    @Subroutine(TealType.none)
     def withdraw():
         pass
 
