@@ -27,7 +27,24 @@ def approval_program():
 
 
     def initialize_app():
-        pass
+        # This fucntion sets the initialize contract states.
+        # It handles the deployment phase of the contract.
+
+        return Seq([
+            Assert(Txn.application_args.length() == Int(3)), # making sure we are sending 3 argumnets with the cntract call
+            
+            # set the states
+            App.globalPut(global_creator, Txn.sender()), # we set the global contract deploer to the sender of the transaction
+            App.globalPut(global_client, Txn.application_args[0]), # we set the client address
+            App.globalPut(global_freelancer, Txn.application_args[1]), # we set the freelancers address
+            App.globalPut(global_amount, Txn.amount, Btoi(Txn.application_args[2])), # we set the milestone amount in algo
+            App.globalPut(global_altimatum, Int(0)), # set the altimatum to 0
+            App.globalPut(global_sent, Bytes("False")), # the paymnet hasn't been made
+            App.globalPut(global_submission_date, Int(0)), # No submission date has been set
+            App.globalPut(global_submitted, Bytes("False")), # milestone hasn't been submitted yet. 
+            Approve()
+        ])
+
 
     def delete_app():
         pass
