@@ -49,6 +49,8 @@ def approval_program():
 
 
     def delete_app():
+        # send all algo the client address
+        # set all global variables to initial state
         pass
 
     @Subroutine(TealType.none)
@@ -106,6 +108,7 @@ def approval_program():
 
     @Subroutine(TealType.none)
     def accept():
+        # case of client accpeting the milestone
         pass
 
     @Subroutine()
@@ -114,10 +117,17 @@ def approval_program():
 
     @Subroutine(TealType.none)
     def refund():
+        # client request for refund when
+        # 1. work has not began
+        # 2. work has eneded and freelancer didn't submit
         pass
 
     @Subroutine(TealType.none)
     def withdraw():
+        # case client hasn't accepted or declined submission
+        # altimatum time must have beem exceeded
+        # freelancer must have submitted work
+        # payment hasn't been made by client
         pass
 
     @Subroutine(TealType.none)
