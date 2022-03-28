@@ -49,6 +49,8 @@ def approval_program():
 
 
     def delete_app():
+        # can only be called by client and creator of contract
+        # the client can only delete the app if the milestone has not stared or it has ended
         # send all algo the client address
         # set all global variables to initial state
         pass
@@ -134,7 +136,26 @@ def approval_program():
         # client request for refund when
         # 1. work has not began
         # 2. work has eneded and freelancer didn't submit
-        pass
+        
+        return Seq([
+            Assert(
+                Txn.sender() == App.globalGet(global_client),
+                Txn.application_args.length() == Int(1),
+                App.globalGet(global_sent) == Bytes("False")
+            ),
+            Assert(
+                Or(
+                    App.globalGet(global_start_date) > Global.latest_timestamp(),
+                    And(
+                        App.globalGet(global_end_date) < Global.latest_timestamp(),
+                        App.globalGet(global_submitted) == Bytes("False")
+                    )
+                )
+            ),
+            sendPayment(Txn.sender(), App.globalGet(global_amount), Txn.sender()),
+            App.globalPut(global_sent, Bytes("True")),
+            Approve()
+        ])
 
     @Subroutine(TealType.none)
     def withdraw():
