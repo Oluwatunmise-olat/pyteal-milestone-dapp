@@ -73,4 +73,4 @@ def approval_program():
     )
 
 def clear_program():
-    pass
+    return Approve()
