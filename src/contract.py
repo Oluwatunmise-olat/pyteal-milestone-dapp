@@ -122,7 +122,7 @@ def approval_program():
                     App.globalGet(global_sent) == Bytes("False"),
                     # assert that the second argumnet equals True to set submission status
                     Txn.application_args[1] == Bytes("True"),
-                    Txn.application_args.length() == Int(2),
+                    Txn.application_args.length() == Int(3),
 
                     # assert the start date is less than current date time
                     App.globalGet(global_start_date <
@@ -140,7 +140,7 @@ def approval_program():
             # check here -->
             # we set the altimatum date (7 days)
             App.globalPut(global_altimatum,
-                          Global.latest_timestamp() + Int(7)),
+                          Btoi(Txn.application_args[2])),
             Approve()
         ])
 
@@ -264,7 +264,7 @@ def approval_program():
                 TxnField.receiver: receiver,  # Funds receiver
                 # address to send the remaining algo in the escrow account to,
                 TxnField.close_remainder_to: close_to_receiver,
-                TxnField.fee: Int(0)
+                TxnField.fee: Int(0), # It has already been paid for
             }),
             InnerTxnBuilder.Submit()
         ])

@@ -1,5 +1,5 @@
 from algosdk.v2client.algod import AlgodClient
-from algosdk import mnemonic, encoding, account
+from algosdk import mnemonic, encoding, account, ALGORAND_MIN_TX_FEE
 from algosdk.logic import get_application_address
 from algosdk.future import transaction
 from dotenv import load_dotenv
@@ -106,7 +106,7 @@ class TransactionService:
         txn_id = signed_txn.transaction.get_txid()
         self.algod_client.send_transactions([signed_txn])
 
-        self.wait_for_confirmation(txn_id, 30)
+        self.wait_for_confirmation(txn_id, 60)
 
         txn_response = self.algod_client.pending_transaction_info(txn_id)
         application_id = txn_response["application-index"]
@@ -132,25 +132,155 @@ class TransactionService:
             'pending txn not found in timeout rounds, timeout value = : {}'.format(timeout))
 
     def set_up_call(self):
+        # This is an atomic transaction consisting of two groups of transactions
         pass
 
-    def no_op_call(self):
+    def no_op_call(self, sender, sender_pk, app_id, on_complete, app_args=None, sign_txn=True, accounts=[], fee=0):
+        suggested_params = self.algod_client.suggested_params()
+
+        if fee != 0:
+            suggested_params.fee = fee * ALGORAND_MIN_TX_FEE
+            suggested_params.flat_fee = True
+
+        txn = transaction.ApplicationCallTxn(
+            sender=sender,
+            sp=suggested_params,
+            index=app_id,
+            app_args=app_args,
+            on_complete=on_complete,
+            accounts=accounts
+        )
+        if sign_txn:
+            txn = txn.sign(sender_pk)
+
+        return txn
+
+    def submit_call(self, app_id, sender, sender_pk, args):
+        txn = self.no_op_call(
+            sender=sender,
+            app_id=app_id,
+            on_complete=transaction.OnComplete.NoOpOC,
+            app_args=args,
+            sign_txn=False,
+            sender_pk=sender_pk
+        )
+
+        signed_txn = txn.sign(sender_pk)
+        txn_id = signed_txn.transaction.get_txid()
+        self.wait_for_confirmation(txn_id, 60)
+
+        self.algod_client.send_transactions([signed_txn])
+        txn_response = self.client.pending_transaction_info(txn_id)
+
+        print(f"Application submit call with transaction resp: {txn_response}")
+
+        return txn_id
+
+    def accept_call(self, sender, sender_pk, app_id, args, accounts):
+        txn = self.no_op_call(
+            fee=2,
+            sender=sender,
+            app_id=app_id,
+            on_complete=transaction.OnComplete.NoOpOC,
+            app_args=args,
+            sign_txn=False,
+            accounts=accounts,
+            sender_pk=sender_pk
+
+        )
+
+        signed_txn = txn.sign(sender_pk)
+        txn_id = signed_txn.transaction.get_txid()
+        self.wait_for_confirmation(txn_id, 60)
+
+        self.algod_client.send_transactions([signed_txn])
+        txn_response = self.algod_client.pending_transaction_info(txn_id)
+
+        print(f"Application accept call with transaction resp: {txn_response}")
+
+        return txn_id
+
+    def refund_call(self, sender, app_id, args, sender_pk):
+        txn = self.no_op_call(
+            sender=sender,
+            app_id=app_id,
+            on_complete=transaction.OnComplete.NoOpOC,
+            app_args=args,
+            sign_txn=False,
+            sender_pk=sender_pk
+        )
+
+        signed_txn = txn.sign(sender_pk)
+        txn_id = signed_txn.transaction.get_txid()
+        self.wait_for_confirmation(txn_id, 60)
+
+        self.algod_client.send_transactions([signed_txn])
+
+        txn_response = self.algod_client.pending_transaction_info(txn_id)
+
+        print(f"Application refund call with transaction resp: {txn_response}")
+
+        return txn_id
+
+
+    def withdraw_call(self, app_id, sender, sender_pk, args, accounts=[]):
+        txn = self.no_op_call(
+        sender=sender,
+        app_id=app_id,
+        on_complete=transaction.OnComplete.NoOpOC,
+        app_args=args,
+        sign_txn=False,
+        accounts=accounts,
+        sender_pk=sender_pk
+    )
+
+        signed_txn = txn.sign(sender_pk)
+        txn_id = signed_txn.transaction.get_txid()
+        self.wait_for_confirmation(txn_id, 60)
+
+        self.algod_client.send_transactions([signed_txn])
+        txn_response = self.algod_client.pending_transaction_info(txn_id)
+
+        print(f"Application withdarw call with transaction resp: {txn_response}")
+
+        return txn_id
+
+    def decline_call(self,sender, sender_pk, app_id, args):
         pass
 
-    def submit_call(self):
-        pass
 
-    def accept_call(self):
-        pass
+    def delete_call(self, app_id: int) -> int:
+        txn = transaction.ApplicationDeleteTxn(
+            sender=self.deployer_address,
+            index=app_id,
+            sp=self.algod_client.suggested_params(),
+        )
 
-    def refund_call(self):
-        pass
+        # here the deployer is deleting the application
+        signed_txn = txn.sign(self.deployer_private_key)
 
-    def withdraw_call(self):
-        pass
+        txn_id = signed_txn.transaction.get_txid()
+        self.wait_for_confirmation(txn_id, 60)
 
-    def delete_call(self):
-        pass
+        self.client.send_transactions([signed_txn])
 
-    def payment_transaction(self):
-        pass
+        txn_response = self.client.pending_transaction_info(txn_id)
+
+        print(f"Application Deleted with transaction resp: {txn_response}")
+
+        return txn_id
+
+    def payment_transaction(self, sender, sender_pk, receiver, amount, sign_txn=True):
+        suggested_params = self.algod_client.suggested_params()
+
+        txn = transaction.PaymentTxn(
+            sender=sender,
+            sp=suggested_params,
+            receiver=receiver,
+            amt=amount
+        )
+
+        if sign_txn:
+            txn = txn.sign(sender_pk)
+
+        return txn
