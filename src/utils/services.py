@@ -1,4 +1,3 @@
-from email.header import decode_header
 from algosdk.v2client.algod import AlgodClient
 from algosdk import mnemonic, encoding, account
 from algosdk.logic import get_application_address
@@ -113,8 +112,24 @@ class TransactionService:
         application_id = txn_response["application-index"]
         return application_id
 
-    def wait_for_confirmation(self):
-        pass
+    def wait_for_confirmation(self, txn_id, timeout):
+        start_round = self.client.status()["last-round"] + 1
+        current_round = start_round
+
+        while current_round < start_round + timeout:
+            try:
+                pending_txn = self.client.pending_transaction_info(txn_id)
+            except Exception:
+                return
+            if pending_txn.get("confirmed-round", 0) > 0:
+                return pending_txn
+            elif pending_txn["pool-error"]:
+                raise Exception(
+                    'pool error: {}'.format(pending_txn["pool-error"]))
+            self.client.status_after_block(current_round)
+            current_round += 1
+        raise Exception(
+            'pending txn not found in timeout rounds, timeout value = : {}'.format(timeout))
 
     def set_up_call(self):
         pass
