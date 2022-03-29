@@ -94,6 +94,10 @@ class Interface:
     def decline_call():
         pass
 
+    @staticmethod
+    def delete_call(app_id):
+        return transaction_instance.delete_call(app_id=app_id)
+
 
 def main():
     try:
@@ -153,12 +157,12 @@ def main():
         print(e.__class__.__name__, exc_type, value, traceback)
 
 
-def delete_app():
+def delete_app(app_id):
     print("======================")
     print("making delete call ...")
     print("======================")
 
-    del_response = Interface.delete_app()
+    del_response = Interface.delete_app(app_id)
     return del_response
 
 
@@ -176,3 +180,5 @@ def delete_app():
 
 if __name__ == '__main__':
     main()
+
+    # delete_app()
