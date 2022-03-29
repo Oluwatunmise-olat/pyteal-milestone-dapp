@@ -1,5 +1,6 @@
 from algosdk.v2client.algod import AlgodClient
-from algosdk import mnemonic, encoding, account, ALGORAND_MIN_TX_FEE
+from algosdk import mnemonic, encoding, account
+from algosdk.constants import MIN_TXN_FEE
 from algosdk.logic import get_application_address
 from algosdk.future import transaction
 from dotenv import load_dotenv
@@ -149,7 +150,7 @@ class TransactionService:
         suggested_params = self.algod_client.suggested_params()
 
         if fee != 0:
-            suggested_params.fee = fee * ALGORAND_MIN_TX_FEE
+            suggested_params.fee = fee * MIN_TXN_FEE
             suggested_params.flat_fee = True
 
         txn = transaction.ApplicationCallTxn(
@@ -281,7 +282,7 @@ class TransactionService:
 
     def delete_call(self, app_id: int) -> int:
         suggested_params = self.algod_client.suggested_params()
-        suggested_params.fee = 2 * ALGORAND_MIN_TX_FEE
+        suggested_params.fee = 2 * MIN_TXN_FEE
         suggested_params.flat_fee = True
 
         txn = transaction.ApplicationDeleteTxn(
