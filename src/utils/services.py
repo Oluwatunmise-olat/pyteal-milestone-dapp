@@ -275,8 +275,29 @@ class TransactionService:
 
         return txn_id
 
-    def decline_call(self, sender, sender_pk, app_id, args):
-        pass
+    def decline_call(self, sender, sender_pk, app_id, args, accounts):
+        txn = self.no_op_call(
+            sender=sender,
+            app_id=app_id,
+            on_complete=transaction.OnComplete.NoOpOC,
+            app_args=args,
+            sign_txn=False,
+            accounts=accounts,
+            sender_pk=sender_pk
+
+        )
+
+        signed_txn = txn.sign(sender_pk)
+        txn_id = signed_txn.transaction.get_txid()
+        self.wait_for_confirmation(txn_id, 60)
+
+        self.algod_client.send_transactions([signed_txn])
+        txn_response = self.algod_client.pending_transaction_info(txn_id)
+
+        print(f"Application decline call with transaction resp: {txn_response}")
+
+        return txn_id
+
 
     def delete_call(self, app_id: int) -> int:
         suggested_params = self.algod_client.suggested_params()
