@@ -131,9 +131,39 @@ class TransactionService:
         raise Exception(
             'pending txn not found in timeout rounds, timeout value = : {}'.format(timeout))
 
-    def set_up_call(self):
+    def set_up_call(self, app_id, app_args, receiver, amount, sender, sender_pk):
         # This is an atomic transaction consisting of two groups of transactions
-        pass
+
+        app_call_txn = self.no_op_call(
+            sender=sender,
+            app_id=app_id,
+            on_complete=transaction.OnComplete.NoOpOC,
+            app_args=app_args,
+            sender_pk=sender_pk,
+            sign_txn=False,
+        )
+
+        payment_call_txn = self.payment_transaction(
+            sender=sender, sender_pk=sender_pk, receiver=receiver, amount=amount, sign_txn=False)
+
+        group_id = transaction.calculate_group_id(
+            [app_call_txn, payment_call_txn])
+
+        app_call_txn.group = group_id
+        payment_call_txn.group = group_id
+
+        app_call_txn_signed = app_call_txn.sign(sender_pk)
+        payment_call_txn_signed = payment_call_txn.sign(sender_pk)
+
+        signed_group = [app_call_txn_signed, payment_call_txn_signed]
+
+        txn_id = self.algod_client.send_transactions(signed_group)
+
+        self.wait_for_confirmation(txn_id, 60)
+
+        print(f"Set up application call with transaction_id: {txn_id}")
+
+        return txn_id
 
     def no_op_call(self, sender, sender_pk, app_id, on_complete, app_args=None, sign_txn=True, accounts=[], fee=0):
         suggested_params = self.algod_client.suggested_params()
@@ -222,17 +252,16 @@ class TransactionService:
 
         return txn_id
 
-
     def withdraw_call(self, app_id, sender, sender_pk, args, accounts=[]):
         txn = self.no_op_call(
-        sender=sender,
-        app_id=app_id,
-        on_complete=transaction.OnComplete.NoOpOC,
-        app_args=args,
-        sign_txn=False,
-        accounts=accounts,
-        sender_pk=sender_pk
-    )
+            sender=sender,
+            app_id=app_id,
+            on_complete=transaction.OnComplete.NoOpOC,
+            app_args=args,
+            sign_txn=False,
+            accounts=accounts,
+            sender_pk=sender_pk
+        )
 
         signed_txn = txn.sign(sender_pk)
         txn_id = signed_txn.transaction.get_txid()
@@ -241,13 +270,13 @@ class TransactionService:
         self.algod_client.send_transactions([signed_txn])
         txn_response = self.algod_client.pending_transaction_info(txn_id)
 
-        print(f"Application withdarw call with transaction resp: {txn_response}")
+        print(
+            f"Application withdarw call with transaction resp: {txn_response}")
 
         return txn_id
 
-    def decline_call(self,sender, sender_pk, app_id, args):
+    def decline_call(self, sender, sender_pk, app_id, args):
         pass
-
 
     def delete_call(self, app_id: int) -> int:
         suggested_params = self.algod_client.suggested_params()

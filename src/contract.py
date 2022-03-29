@@ -79,6 +79,7 @@ def approval_program():
                 Txn.application_args.length() == Int(1)
             ),
             sendPayment(Txn.sender(), App.globalGet(global_client), Txn.sender()), 
+            Approve()
         ])
 
     @Subroutine(TealType.none)
@@ -190,7 +191,14 @@ def approval_program():
         # payment should not have been made
         # 60% of amount is sent to client
         # 40% of amount is sent to freelancer
-        pass
+        
+        return Seq([
+            Assert(
+                And(
+
+                )
+            )
+        ])
 
     @Subroutine(TealType.none)
     def refund():
@@ -268,7 +276,7 @@ def approval_program():
                 # specifies the type of transacion been made (paymnet, application_call, etc)
                 TxnField.type_enum: TxnType.Payment,
                 # we subtract the cost for making the call (gas fee) and the minimum amount of algo that must be in an algorand account
-                TxnField.amount: amount_in_algo - (Global.min_txn_fee() + Global.min_balance()),
+                TxnField.amount: amount_in_algo - Global.min_balance(),
                 # The sender of this payment is the smart contract escrow address
                 TxnField.sender: Global.current_application_address(),
                 TxnField.receiver: receiver,  # Funds receiver
