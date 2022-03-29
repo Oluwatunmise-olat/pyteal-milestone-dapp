@@ -173,3 +173,6 @@ def delete_app():
 # withdraw case
 # refund case
 # decline case
+
+if __name__ == '__main__':
+    main()

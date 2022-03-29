@@ -74,3 +74,9 @@ Open a terminal and run:
 create a ```.env``` file in the root of the project and paste your environment variables as described in the ```.env.example``` file.
 
 ## Run the App
+ Open a terminal in project directory and run
+
+ ```bash
+ cd src
+ python3 deploy.py
+ ```
