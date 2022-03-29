@@ -169,7 +169,7 @@ def approval_program():
                     App.globalGet(global_sent) == Bytes("False"),
                     Txn.application_args.length() == Int(1),
                     Txn.group_index() == Int(0),
-                    Txn.accounts[1] == App.globalGet(global_client),
+                    Txn.accounts[1] == App.globalGet(global_freelancer),
                 )
             ),
 
@@ -195,9 +195,15 @@ def approval_program():
         return Seq([
             Assert(
                 And(
-
+                    Txn.sender() == App.globalGet(global_client),
+                    App.globalGet(global_submitted) == Bytes("True"),
+                    App.globalGet(global_sent) == Bytes("False"),
+                    Txn.accounts[1] == App.globalGet(global_freelancer),
                 )
-            )
+            ),
+            sendFund(Txn.sender(), Int(App.globalGet(global_amount) - App.globalGet(global_amount) * 0.6), Txn.sender()),
+            sendFund(Txn.accounts[1], Int(App.globalGet(global_amount) - App.globalGet(global_amount) * 0.4), Txn.accounts[1]),
+            Approve()
         ])
 
     @Subroutine(TealType.none)
@@ -267,9 +273,9 @@ def approval_program():
         ])
 
     @Subroutine(TealType.none)
+    def sendPayment(receiver, amount_in_algo, close_to_receiver):
     # This demonstrates just a basic use case of inner transactions.
     # Accounts on algorand must maintain a minimum balace of 100,000 microAlgos
-    def sendPayment(receiver, amount_in_algo, close_to_receiver):
         return Seq([
             InnerTxnBuilder.Begin(),
             InnerTxnBuilder.SetFields({
@@ -285,6 +291,25 @@ def approval_program():
                 TxnField.fee: Int(0), # It has already been paid for
             }),
             InnerTxnBuilder.Submit()
+        ])
+
+    @Subroutine(TealType.none)
+    def sendFund(receiver, amount, close_to_receiver):
+        return Seq([
+            InnerTxnBuilder.Begin(),
+            InnerTxnBuilder.SetFields({
+                # specifies the type of transacion been made (paymnet, application_call, etc)
+                TxnField.type_enum: TxnType.Payment,
+                # we subtract the cost for making the call (gas fee) and the minimum amount of algo that must be in an algorand account
+                TxnField.amount: amount - (Global.min_balance() + Global.min_txn_fee()),
+                # The sender of this payment is the smart contract escrow address
+                TxnField.sender: Global.current_application_address(),
+                TxnField.receiver: receiver,  # Funds receiver
+                # address to send the remaining algo in the escrow account to,
+                TxnField.close_remainder_to: close_to_receiver,
+            }),
+            InnerTxnBuilder.Submit()
+
         ])
 
     return contract_events(
