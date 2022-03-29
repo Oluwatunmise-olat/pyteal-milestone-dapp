@@ -71,6 +71,6 @@ Open a terminal and run:
 
 ### Set Environment Variables
 
-create a ```.env``` file in the root of the project and paste your environment variables as described in the ```.env.exmaple``` file.
+create a ```.env``` file in the root of the project and paste your environment variables as described in the ```.env.example``` file.
 
 ## Run the App
