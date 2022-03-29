@@ -2,6 +2,7 @@ from email.header import decode_header
 from algosdk.v2client.algod import AlgodClient
 from algosdk import mnemonic, encoding, account
 from algosdk.logic import get_application_address
+from algosdk.future import transaction
 from dotenv import load_dotenv
 
 import os
@@ -80,9 +81,37 @@ class TransactionService:
     deployer_private_key = WebService.get_deployer_private_key
     deployer_address = WebService.get_address_from_pk(deployer_private_key)
 
-    
-    def create_contract(self):
-        pass
+    def create_contract(
+        self,
+        approval_program,
+        clear_program,
+        global_schema,
+        local_schema,
+        args
+    ):
+        on_complete = transaction.OnComplete.NoOpOC.real
+        suggested_params = self.algod_client.suggested_params()
+
+        txn = transaction.ApplicationCreateTxn(
+            self.deployer_address,
+            suggested_params,
+            on_complete,
+            approval_program,
+            clear_program,
+            global_schema,
+            local_schema,
+            args
+        )
+
+        signed_txn = txn.sign(self.deployer_private_key)
+        txn_id = signed_txn.transaction.get_txid()
+        self.algod_client.send_transactions([signed_txn])
+
+        self.wait_for_confirmation(txn_id, 30)
+
+        txn_response = self.algod_client.pending_transaction_info(txn_id)
+        application_id = txn_response["application-index"]
+        return application_id
 
     def wait_for_confirmation(self):
         pass
@@ -110,8 +139,3 @@ class TransactionService:
 
     def payment_transaction(self):
         pass
-
-
-
-
-
