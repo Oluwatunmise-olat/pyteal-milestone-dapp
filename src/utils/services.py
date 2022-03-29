@@ -250,10 +250,14 @@ class TransactionService:
 
 
     def delete_call(self, app_id: int) -> int:
+        suggested_params = self.algod_client.suggested_params()
+        suggested_params.fee = 2 * ALGORAND_MIN_TX_FEE
+        suggested_params.flat_fee = True
+
         txn = transaction.ApplicationDeleteTxn(
             sender=self.deployer_address,
             index=app_id,
-            sp=self.algod_client.suggested_params(),
+            sp=suggested_params
         )
 
         # here the deployer is deleting the application

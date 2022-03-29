@@ -65,11 +65,21 @@ def approval_program():
         ])
 
     def delete_app():
-        # can only be called by client and creator of contract
-        # the client can only delete the app if the milestone has not stared or it has ended
+        # can only be called by creator of contract (subjective as it can also be called by client)
+        # Ideal this isn't how you would want to handle deleting a contract
+        # yo would most likely only want this app deleted if the milestone has not stared or it has ended
+        # but i just implement it this way because i want to clear the amount of apps i have on the deploer address
+
         # send all algo the client address
         # set all global variables to initial state
-        pass
+        
+        return Seq([
+            Assert(
+                Txn.sender() == App.globalGet(global_creator),
+                Txn.application_args.length() == Int(1)
+            ),
+            sendPayment(Txn.sender(), App.globalGet(global_client), Txn.sender()), 
+        ])
 
     @Subroutine(TealType.none)
     def set_state():
