@@ -1,6 +1,6 @@
 # Pyteal Milestone Dapp
 
-## **NOTE: This code is not audited and should not be used in production environment**
+## **NOTE**: This code is not audited and should not be used in production environment.
 
 ## Goal of Project and Concepts Covered.
 
@@ -68,5 +68,9 @@ Open a terminal and run:
 ```bash
  python3 -r requirements.txt
 ```
+
+### Set Environment Variables
+
+create a ```.env``` file in the root of the project and paste your environment variables as described in the ```.env.exmaple``` file.
 
 ## Run the App
