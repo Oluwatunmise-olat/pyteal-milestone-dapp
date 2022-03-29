@@ -10,5 +10,6 @@ def contract_schema(byteslice, uint):
 
 def compile_to_bytes(client: AlgodClient, code):
     # This function helps convert our teal code to bytes
-    compile_response = client.compile(code)
+    teal = compileTeal(code, mode=Mode.Application, version=MAX_TEAL_VERSION)
+    compile_response = client.compile(teal)
     return base64.b64encode(compile_response['result'])

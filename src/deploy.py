@@ -1,14 +1,51 @@
 import sys
 import time
 from pyteal import TealCompileError, TealInputError, TealTypeError, TealInternalError
-from utils.services import WebService, AccountService, TransactionService
+from utils.services import WebService, AccountService, transaction_instance
+
+from contract import approval_program, clear_program
+from deploy_helpers import contract_schema, compile_to_bytes
 
 
 class Interface:
 
     @staticmethod
     def create_call():
-        pass
+        # The spce that should be reserved for storage local (if using local storage) and globally
+        global_schema = contract_schema(6, 5)
+        local_schema = contract_schema(0, 0)
+
+        compiled_approval_program = compile_to_bytes(
+            WebService.algod_client, approval_program())
+        compiled_clear_program = compile_to_bytes(
+            WebService.algod_client, clear_program())
+
+        # arguments
+        args = [
+            WebService.get_address_from_pk(AccountService.get_client_private_key),
+            1_500_000, # (15 algo)
+            WebService.get_address_from_pk(AccountService.get_freelancer_private_key)
+        ]
+
+        app_id = transaction_instance.create_contract(
+            approval_program= compiled_approval_program,
+            clear_program= compiled_clear_program,
+            global_schema= global_schema,
+            local_schema= local_schema,
+            args=args
+        )
+
+        # Read global state of contract
+
+        global_state=transaction_instance.read_global_state(app_id)
+
+        print("================================")
+        print(" Samrt Contract Global State ...")
+        print("=================================")
+
+        print(global_state)
+
+        return app_id
 
     @staticmethod
     def set_up_call():
@@ -84,21 +121,20 @@ def main():
         accept_response = Interface.accept_call()
         print(f"Smart Contract Accept response {accept_response}")
 
-
-
     except Exception as e:
         exc_type, value, traceback = sys.exc_info()
         # assert exc_type.__name__ == 'NameError'
         print(e.__class__.__name__, exc_type, value, traceback)
+
 
 def delete_app():
     print("======================")
     print("making delete call ...")
     print("======================")
 
-
     del_response = Interface.delete_app()
     return del_response
+
 
 """ Error Types
     1. TealInternalError

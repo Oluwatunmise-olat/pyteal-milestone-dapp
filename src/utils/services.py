@@ -38,26 +38,6 @@ class WebService:
     def get_address_from_pk(pk):
         return account.address_from_private_key(pk)
 
-    @staticmethod
-    def format_data(data):
-        formatted = {}
-        for item in data:
-            key = item["key"]
-            value = item["value"]
-            formatted_key = base64.b64decode(key).decode("utf-8")
-
-            if value["type"] == 1:
-                if formatted_key == 'voted':
-                    formatted_value = base64.b64decode(
-                        value['bytes']).decode('utf-8')
-                else:
-                    formatted_value = value['bytes']
-                formatted[formatted_key] = formatted_value
-            else:
-                formatted[formatted_key] = value['uint']
-
-        return formatted
-
 
 class AccountService:
     client_mnemonic = os.environ.get("client_mnemonic", None)
@@ -294,10 +274,10 @@ class TransactionService:
         self.algod_client.send_transactions([signed_txn])
         txn_response = self.algod_client.pending_transaction_info(txn_id)
 
-        print(f"Application decline call with transaction resp: {txn_response}")
+        print(
+            f"Application decline call with transaction resp: {txn_response}")
 
         return txn_id
-
 
     def delete_call(self, app_id: int) -> int:
         suggested_params = self.algod_client.suggested_params()
@@ -338,3 +318,29 @@ class TransactionService:
             txn = txn.sign(sender_pk)
 
         return txn
+
+    def __format_state(self, state):
+        formatted = {}
+        for item in state:
+            key = item["key"]
+            value = item["value"]
+            formatted_key = base64.b64decode(key).decode("utf-8")
+
+            if value["type"] == 1:
+                if formatted_key == 'voted':
+                    formatted_value = base64.b64decode(
+                        value['bytes']).decode('utf-8')
+                else:
+                    formatted_value = value['bytes']
+                formatted[formatted_key] = formatted_value
+            else:
+                formatted[formatted_key] = value['uint']
+
+        return formatted
+
+    def read_global_state(self, app_id: int):
+        app = self.algod_client.application_info(app_id)
+        global_state = app["params"]["global-state"] if "global-state" in app["params"] else []
+        return self.__format_state(global_state)
+
+transaction_instance = TransactionService()
