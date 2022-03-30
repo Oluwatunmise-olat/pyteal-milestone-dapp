@@ -12,4 +12,4 @@ def compile_to_bytes(client: AlgodClient, code):
     # This function helps convert our teal code to bytes
     teal = compileTeal(code, mode=Mode.Application, version=MAX_TEAL_VERSION)
     compile_response = client.compile(teal)
-    return base64.b64encode(compile_response['result'])
+    return base64.b64decode(compile_response['result'])

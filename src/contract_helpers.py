@@ -8,8 +8,7 @@ def contract_events(
     opt_in_contract=Reject(),
     close_out_contract=Reject(),
     no_op_contract=Reject(),
-)-> Expr:
-
+) -> Expr:
     """ Function Explanation
 
     Params:
@@ -33,9 +32,10 @@ def contract_events(
         [Txn.on_completion() == OnComplete.NoOp, no_op_contract],
     )
 
+
 def application(pyteal: Expr):
     # This function compiles all our pyteal code to the hightest version of teal
 
     # Mode.Application means we a calling the contract has an application and not a smart signature
-    
+
     return compileTeal(pyteal, mode=Mode.Application, version=MAX_TEAL_VERSION)

@@ -2,19 +2,20 @@ import sys
 import time
 from pyteal import TealCompileError, TealInputError, TealTypeError, TealInternalError
 from utils.services import WebService, AccountService, transaction_instance
-
+from utils.time import get_current_timestamp, get_future_timestamp_in_days, get_future_timestamp_in_secs
 from contract import approval_program, clear_program
 from deploy_helpers import contract_schema, compile_to_bytes
 
 # Addresses
+
 client_address = WebService.get_address_from_pk(
-    AccountService.get_client_private_keyy)
+    AccountService.get_client_private_key())
 freelancer_address = WebService.get_address_from_pk(
-    AccountService.get_freelancer_private_key)
+    AccountService.get_freelancer_private_key())
 
 # Private Keys
-client_pk = AccountService.get_client_private_key
-freelancer_pk = AccountService.get_freelancer_private_key
+client_pk = AccountService.get_client_private_key()
+freelancer_pk = AccountService.get_freelancer_private_key()
 
 
 class Interface:
@@ -25,16 +26,19 @@ class Interface:
         global_schema = contract_schema(6, 5)
         local_schema = contract_schema(0, 0)
 
+        algod_client = WebService.algod_client()
+
         compiled_approval_program = compile_to_bytes(
-            WebService.algod_client, approval_program())
+            client=algod_client, code=approval_program())
+
         compiled_clear_program = compile_to_bytes(
-            WebService.algod_client, clear_program())
+            client=algod_client, code=clear_program())
 
         # arguments
         args = [
             client_address,
+            freelancer_address,
             1_500_000,  # (15 algo)
-            freelancer_address
         ]
 
         app_id = transaction_instance.create_contract(
@@ -61,8 +65,9 @@ class Interface:
     def set_up_call(app_id, sender, sender_pk, receiver, amount):
         args = [
             "set_state",
-            "",  # start milestone timestamp
-            ""  # end milestone timestamp
+            int(get_current_timestamp()),  # start milestone timestamp
+            # end milestone timestamp (14 days)
+            int(get_future_timestamp_in_days(days=14))
         ]
 
         return transaction_instance.set_up_call(app_id=app_id, app_args=args, receiver=receiver, sender=sender, amount=amount, sender_pk=sender_pk)
@@ -74,9 +79,10 @@ class Interface:
     @staticmethod
     def submit_call(app_id, sender_pk, sender):
         args = [
-            ["submit"],
+            "submit",
             "True",
-            ""  # timestamp for altimatum (7 days from submission)
+            # timestamp for altimatum (7 days from submission)
+            int(get_future_timestamp_in_days(days=7))
         ]
         return transaction_instance.submit_call(app_id=app_id, sender_pk=sender_pk, sender=sender, args=args)
 
@@ -107,6 +113,8 @@ def main():
 
         # deploy the smart contract
         application_id = Interface.create_call()
+
+        print(f"Application id: {application_id}")
 
         # get the smart contract algorand address
         print("======================")
@@ -152,9 +160,10 @@ def main():
         print(f"Smart Contract Accept response {accept_response}")
 
     except Exception as e:
-        exc_type, value, traceback = sys.exc_info()
+        print(e)
+        # exc_type, value, traceback = sys.exc_info()
         # assert exc_type.__name__ == 'NameError'
-        print(e.__class__.__name__, exc_type, value, traceback)
+        # print(e.__class__.__name__, exc_type, value, traceback)
 
 
 def delete_app(app_id):

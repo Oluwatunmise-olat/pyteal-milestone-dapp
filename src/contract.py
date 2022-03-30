@@ -48,8 +48,7 @@ def approval_program():
             # we set the freelancers address
             App.globalPut(global_freelancer, Txn.application_args[1]),
             # we set the milestone amount in algo
-            App.globalPut(global_amount, Txn.amount,
-                          Btoi(Txn.application_args[2])),
+            App.globalPut(global_amount, Btoi(Txn.application_args[2])),
             App.globalPut(global_altimatum, Int(0)),  # set the altimatum to 0
             # the paymnet hasn't been made
             App.globalPut(global_sent, Bytes("False")),
@@ -72,13 +71,17 @@ def approval_program():
 
         # send all algo the client address
         # set all global variables to initial state
-        
+
         return Seq([
             Assert(
-                Txn.sender() == App.globalGet(global_creator),
-                Txn.application_args.length() == Int(1)
+                And(
+
+                    Txn.sender() == App.globalGet(global_creator),
+                    Txn.application_args.length() == Int(1)
+                )
             ),
-            sendPayment(Txn.sender(), App.globalGet(global_client), Txn.sender()), 
+            sendPayment(Txn.sender(), App.globalGet(
+                global_client), Txn.sender()),
             Approve()
         ])
 
@@ -105,7 +108,7 @@ def approval_program():
                     Gtxn[1].amount() == App.globalGet(global_amount),
                     # assert the payment is to the smart contract escrow address
                     Gtxn[1].receiver() == Global.current_application_address(),
-                    Gtxn[1].close_to_receiver() == Global.zero_address(),
+                    Gtxn[1].close_remainder_to() == Global.zero_address(),
                     App.globalGet(global_start_date) == App.globalGet(
                         global_end_date) == Int(0),  # assert the contract hasn't started
                 )
@@ -136,11 +139,11 @@ def approval_program():
                     Txn.application_args.length() == Int(3),
 
                     # assert the start date is less than current date time
-                    App.globalGet(global_start_date <
-                                  Global.latest_timestamp()),
+                    App.globalGet(
+                        global_start_date) < Global.latest_timestamp(),
                     # assert that the enddate is greater than the current date time
-                    App.globalGet(global_end_date >=
-                                  Global.latest_timestamp()),
+                    App.globalGet(
+                        global_end_date) >= Global.latest_timestamp(),
 
                 )
             ),
@@ -150,8 +153,7 @@ def approval_program():
             App.globalPut(global_submission_date, Global.latest_timestamp()),
             # check here -->
             # we set the altimatum date (7 days)
-            App.globalPut(global_altimatum,
-                          Btoi(Txn.application_args[2])),
+            App.globalPut(global_altimatum, Btoi(Txn.application_args[2])),
             Approve()
         ])
 
@@ -191,7 +193,7 @@ def approval_program():
         # payment should not have been made
         # 60% of amount is sent to client
         # 40% of amount is sent to freelancer
-        
+
         return Seq([
             Assert(
                 And(
@@ -201,8 +203,8 @@ def approval_program():
                     Txn.accounts[1] == App.globalGet(global_freelancer),
                 )
             ),
-            sendFund(Txn.sender(), Int(App.globalGet(global_amount) - App.globalGet(global_amount) * 0.6), Txn.sender()),
-            sendFund(Txn.accounts[1], Int(App.globalGet(global_amount) - App.globalGet(global_amount) * 0.4), Txn.accounts[1]),
+            # sendFund(Txn.sender(), App.globalGet(global_amount) -(App.globalGet(global_amount) * 0.6), Txn.sender()),
+            # sendFund(Txn.accounts[1], App.globalGet(global_amount) - (App.globalGet(global_amount) * 0.4), Txn.accounts[1]),
             Approve()
         ])
 
@@ -274,8 +276,8 @@ def approval_program():
 
     @Subroutine(TealType.none)
     def sendPayment(receiver, amount_in_algo, close_to_receiver):
-    # This demonstrates just a basic use case of inner transactions.
-    # Accounts on algorand must maintain a minimum balace of 100,000 microAlgos
+        # This demonstrates just a basic use case of inner transactions.
+        # Accounts on algorand must maintain a minimum balace of 100,000 microAlgos
         return Seq([
             InnerTxnBuilder.Begin(),
             InnerTxnBuilder.SetFields({
@@ -288,7 +290,7 @@ def approval_program():
                 TxnField.receiver: receiver,  # Funds receiver
                 # address to send the remaining algo in the escrow account to,
                 TxnField.close_remainder_to: close_to_receiver,
-                TxnField.fee: Int(0), # It has already been paid for
+                TxnField.fee: Int(0),  # It has already been paid for
             }),
             InnerTxnBuilder.Submit()
         ])
@@ -309,24 +311,183 @@ def approval_program():
                 TxnField.close_remainder_to: close_to_receiver,
             }),
             InnerTxnBuilder.Submit()
-
         ])
 
     return contract_events(
-        delete_contract=delete_app(),
         initialize_contract=initialize_app(),
+        delete_contract=delete_app(),
         no_op_contract=Seq([
             Cond(
                 [Txn.application_args[0] == op_set_state, set_state()],
                 [Txn.application_args[0] == op_submit, submit()],
                 [Txn.application_args[0] == op_accept, accept()],
                 [Txn.application_args[0] == op_decline, decline()],
-                [Txn.application_args[0] == op_refund, refund()]
+                [Txn.application_args[0] == op_refund, refund()],
                 [Txn.application_args[0] == op_withdraw, withdraw()],
             ),
             Reject()
         ])
     )
+
+
+# def approval():
+
+#     # App Global States
+#     op_set_state = Bytes("set_state")
+#     op_accept = Bytes("accept")
+#     op_decline = Bytes("decline")
+#     op_submit = Bytes("submit")
+#     op_withdraw = Bytes("withdraw")
+#     op_refund = Bytes("refund")
+
+#     global_creator = Bytes("global_creator")
+#     # unint64 [time the milestone is to start]
+#     global_start_date = Bytes("start_date")
+#     # unint64 [time the milestone is to end]
+#     global_end_date = Bytes("end_date")
+#     # unint64 [amont to be paid in algo for milestone]
+#     global_amount = Bytes("amount")
+#     # unint64 [time the client has to review submission and accept or decline after freelancer submission]
+#     global_altimatum = Bytes("altimatum")
+
+#     global_client = Bytes("client")  # byteslice
+#     global_freelancer = Bytes("freelancer")  # byteslice
+
+#     # unit64 [when the freelancer submitted the work for review]
+#     global_submission_date = Bytes("submission_date")
+#     global_submitted = Bytes("submit")  # byteslice
+#     global_sent = Bytes("sent")  # byteslice [status of payment]
+
+#     def initialize_app():
+#         return Seq([
+#             # making sure we are sending 3 argumnets with the cntract call
+#             Assert(Txn.application_args.length() == Int(3)),
+
+#             # set the states
+#             # we set the global contract deploer to the sender of the transaction
+#             App.globalPut(global_creator, Txn.sender()),
+#             # we set the client address
+#             App.globalPut(global_client, Txn.application_args[0]),
+#             # we set the freelancers address
+#             App.globalPut(global_freelancer, Txn.application_args[1]),
+#             # we set the milestone amount in algo
+#             App.globalPut(global_amount, Btoi(Txn.application_args[2])),
+#             App.globalPut(global_altimatum, Int(0)),  # set the altimatum to 0
+#             # the paymnet hasn't been made
+#             App.globalPut(global_sent, Bytes("False")),
+#             # No submission date has been set
+#             App.globalPut(global_submission_date, Int(0)),
+#             # milestone hasn't been submitted yet.
+#             App.globalPut(global_submitted, Bytes("False")),
+#             # set the start date to Int(0)
+#             App.globalPut(global_start_date, Int(0)),
+#             # set the end date to Int(0)
+#             App.globalPut(global_end_date, Int(0)),
+#             Approve()
+#         ])
+
+#     def delete_app():
+#         return Seq([
+#             Assert(
+#                 And(
+#                     Txn.sender() == App.globalGet(global_creator),
+#                     Txn.application_args.length() == Int(1)
+#                 )
+#             ),
+#             sendPayment(Txn.sender(), App.globalGet(
+#                 global_client), Txn.sender()),
+#             Approve()
+#         ])
+
+#     @Subroutine(TealType.none)
+#     def submit():
+#         pass
+
+#     @Subroutine(TealType.none)
+#     def accept():
+#         pass
+
+#     @Subroutine(TealType.none)
+#     def refund():
+#         pass
+
+#     @Subroutine(TealType.none)
+#     def decline():
+#         pass
+
+#     @Subroutine(TealType.none)
+#     def withdraw():
+#         pass
+
+#     @Subroutine(TealType.none)
+#     def set_state():
+#         return Seq([
+#             # Run some checks
+#             Assert(
+#                 And(
+#                     # assert it a group transaction with a group size of 2
+#                     Global.group_size() == Int(2),
+#                     Txn.group_index() == Int(0),
+#                     # assert it is the client making this call
+#                     Txn.sender() == App.globalGet(global_client),
+#                     # assert the length of the argumnets passed is 3
+#                     Txn.application_args.length() == Int(3),
+
+#                     # assert the second transaction in the group is a payment transaction
+#                     Gtxn[1].type_enum() == TxnType.Payment,
+#                     # assert the right amount is sent
+#                     Gtxn[1].amount() == App.globalGet(global_amount),
+#                     # assert the payment is to the smart contract escrow address
+#                     Gtxn[1].receiver() == Global.current_application_address(),
+#                     Gtxn[1].close_remainder_to() == Global.zero_address(),
+#                     App.globalGet(global_start_date) == App.globalGet(
+#                         global_end_date) == Int(0),  # assert the contract hasn't started
+#                 )
+#             ),
+
+#             #  set the start and end dates
+#             App.globalPut(global_start_date, Btoi(Txn.application_args[1])),
+#             App.globalPut(global_end_date, Btoi(Txn.application_args[2])),
+#             Approve()
+#         ])
+
+
+#     @ Subroutine(TealType.none)
+#     def sendPayment(receiver, amount_in_algo, close_to_receiver):
+#         # This demonstrates just a basic use case of inner transactions.
+#         # Accounts on algorand must maintain a minimum balace of 100,000 microAlgos
+#         return Seq([
+#             InnerTxnBuilder.Begin(),
+#             InnerTxnBuilder.SetFields({
+#                 # specifies the type of transacion been made (paymnet, application_call, etc)
+#                 TxnField.type_enum: TxnType.Payment,
+#                 # we subtract the cost for making the call (gas fee) and the minimum amount of algo that must be in an algorand account
+#                 TxnField.amount: amount_in_algo - Global.min_balance(),
+#                 # The sender of this payment is the smart contract escrow address
+#                 TxnField.sender: Global.current_application_address(),
+#                 TxnField.receiver: receiver,  # Funds receiver
+#                 # address to send the remaining algo in the escrow account to,
+#                 TxnField.close_remainder_to: close_to_receiver,
+#                 TxnField.fee: Int(0),  # It has already been paid for
+#             }),
+#             InnerTxnBuilder.Submit()
+#         ])
+
+#     return contract_events(
+#         initialize_contract=initialize_app(),
+#         delete_contract=delete_app(),
+#         no_op_contract=Seq([
+#             Cond(
+#                 [Txn.application_args[0] == op_set_state, set_state()],
+#         #         # [Txn.application_args[0] == op_submit, submit()],
+#         #         # [Txn.application_args[0] == op_accept, accept()],
+#         #         # [Txn.application_args[0] == op_decline, decline()],
+#         #         # [Txn.application_args[0] == op_refund, refund()],
+#         #         # [Txn.application_args[0] == op_withdraw, withdraw()],
+#             ),
+#             Reject()
+#         ])
+#     )
 
 
 def clear_program():

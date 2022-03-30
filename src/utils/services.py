@@ -18,14 +18,14 @@ class WebService:
     if not deployer_mnemonic or not testnet_address:
         raise Exception("Environment variable has to be set")
 
-    @property
-    def algod_client(self):
+    @staticmethod
+    def algod_client():
         token = "a" * 64
-        return AlgodClient(token, self.testnet_address)
+        return AlgodClient(token, WebService.testnet_address)
 
-    @property
-    def get_deployer_private_key(self):
-        return mnemonic.to_private_key(self.deployer_mnemonic)
+    @staticmethod
+    def get_deployer_private_key():
+        return mnemonic.to_private_key(WebService.deployer_mnemonic)
 
     @staticmethod
     def address_to_bytes(address):
@@ -47,18 +47,18 @@ class AccountService:
     if not client_mnemonic or not freelancer_mnemonic:
         raise Exception("Environment variable has to be set")
 
-    @property
-    def get_client_private_key(self):
-        return mnemonic.to_private_key(self.client_mnemonic)
+    @staticmethod
+    def get_client_private_key():
+        return mnemonic.to_private_key(AccountService.client_mnemonic)
 
-    @property
-    def get_freelancer_private_key(self):
-        return mnemonic.to_private_key(self.freelancer_mnemonic)
+    @staticmethod
+    def get_freelancer_private_key():
+        return mnemonic.to_private_key(AccountService.freelancer_mnemonic)
 
 
 class TransactionService:
-    algod_client = WebService.algod_client
-    deployer_private_key = WebService.get_deployer_private_key
+    algod_client = WebService.algod_client()
+    deployer_private_key = WebService.get_deployer_private_key()
     deployer_address = WebService.get_address_from_pk(deployer_private_key)
 
     def create_contract(
@@ -94,12 +94,12 @@ class TransactionService:
         return application_id
 
     def wait_for_confirmation(self, txn_id, timeout):
-        start_round = self.client.status()["last-round"] + 1
+        start_round = self.algod_client.status()["last-round"] + 1
         current_round = start_round
 
         while current_round < start_round + timeout:
             try:
-                pending_txn = self.client.pending_transaction_info(txn_id)
+                pending_txn = self.algod_client.pending_transaction_info(txn_id)
             except Exception:
                 return
             if pending_txn.get("confirmed-round", 0) > 0:
@@ -107,7 +107,7 @@ class TransactionService:
             elif pending_txn["pool-error"]:
                 raise Exception(
                     'pool error: {}'.format(pending_txn["pool-error"]))
-            self.client.status_after_block(current_round)
+            self.algod_client.status_after_block(current_round)
             current_round += 1
         raise Exception(
             'pending txn not found in timeout rounds, timeout value = : {}'.format(timeout))
@@ -181,7 +181,7 @@ class TransactionService:
         self.wait_for_confirmation(txn_id, 60)
 
         self.algod_client.send_transactions([signed_txn])
-        txn_response = self.client.pending_transaction_info(txn_id)
+        txn_response = self.algod_client.pending_transaction_info(txn_id)
 
         print(f"Application submit call with transaction resp: {txn_response}")
 
@@ -297,9 +297,9 @@ class TransactionService:
         txn_id = signed_txn.transaction.get_txid()
         self.wait_for_confirmation(txn_id, 60)
 
-        self.client.send_transactions([signed_txn])
+        self.algod_client.send_transactions([signed_txn])
 
-        txn_response = self.client.pending_transaction_info(txn_id)
+        txn_response = self.algod_client.pending_transaction_info(txn_id)
 
         print(f"Application Deleted with transaction resp: {txn_response}")
 
