@@ -14,7 +14,6 @@
 1. To teach about **transacion fee pooling** on algorand.
 2. **Inner Transactions**.
 3. **Handling Errors** when interacting with smart contract via a python script.
-4. **Writing unittest** for a samrt contract.
 
 ## Set Up Environment
 
