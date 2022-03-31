@@ -2,3 +2,5 @@ __pycache__
 venv
 steps.txt
 .env
+src/sc.py
+sandbox

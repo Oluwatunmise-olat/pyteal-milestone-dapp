@@ -1,6 +1,11 @@
 # Pyteal Milestone Dapp
 
 ## **NOTE**: This code is not audited and should not be used in production environment.
+## **NOTE**: This tutorial is not for beginners and assumes the reader is familiar with setting up a private algorand node and setting up testnet accounts.
+
+### Resources
+[Read about algorand sandbox](https://developer.algorand.org/tutorials/exploring-the-algorand-sandbox/)
+[This tutorail also touches on using algorand sandbox and setting account](https://dappradar.com/blog/introduction-to-algorand-pyteal-smart-signature-development)
 
 ## Goal of Project and Concepts Covered.
 
@@ -55,7 +60,10 @@ In whatever local directory the sandbox should reside. Then:
 ```bash
 cd sandbox
 ./sandbox up
+
+It should run the released version of sandbox
 ```
+
 
 This will run the `sandbox` shell script with the default configuration. See the [Basic Configuration](#basic-configuration) for other options.
 
@@ -66,12 +74,28 @@ Install all project dependencies
 Open a terminal and run:
 
 ```bash
- python3 -r requirements.txt
+ python3 pip -r requirements.txt
 ```
 
 ### Set Environment Variables
 
 create a ```.env``` file in the root of the project and paste your environment variables as described in the ```.env.example``` file.
+
+### Set Testnet Account
+
+import 3 testnet accounts to the goal app by running this command:
+```bash
+./sandbox goal account import
+```
+
+### Fund Imported Testnet Account
+
+```
+./sandbox goal clerk send -a {amount} -f {provided accounts in goal} -t {imported accounts}
+```
+
+### For more information on how to use alglorand sandbox visit. [sandox][./sandbox goal clerk send -a 200000000 -f client -t EJNUGTF56QWEQWZGRKGCF7U4QY2UDJ2GXYCCZFSHDFKDLW2XE7MCJNKP7E]
+### For more information on how to use alglorand sandbox. [sandox]()
 
 ## Run the App
  Open a terminal in project directory and run
