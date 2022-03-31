@@ -1,7 +1,8 @@
 # Pyteal Milestone Dapp
 
-## **NOTE**: This code is not audited and should not be used in production environment.
-## **NOTE**: This tutorial is not for beginners and assumes the reader is familiar with setting up a private algorand node and setting up testnet accounts.
+**NOTE**: This code is not audited and should not be used in production environment.
+
+**NOTE**: This tutorial is not for beginners and assumes the reader is familiar with setting up a private algorand node and setting up testnet accounts.
 
 ### Resources
 [Read about algorand sandbox](https://developer.algorand.org/tutorials/exploring-the-algorand-sandbox/)
