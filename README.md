@@ -5,6 +5,7 @@
 **NOTE**: This tutorial is not for beginners and assumes the reader is familiar with setting up a private algorand node and setting up testnet accounts.
 
 ### Resources
+[Link to Tutorial](https://developer.algorand.org/tutorials/milestone-dapp-built-with-pyteal/)
 [Read about algorand sandbox](https://developer.algorand.org/tutorials/exploring-the-algorand-sandbox/)
 
 [This tutorial also touches on using algorand sandbox and setting account](https://dappradar.com/blog/introduction-to-algorand-pyteal-smart-signature-development)

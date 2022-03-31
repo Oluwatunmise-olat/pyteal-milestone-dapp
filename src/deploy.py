@@ -39,7 +39,7 @@ class Interface:
         args = [
             WebService.address_to_bytes(client_address),
             WebService.address_to_bytes(freelancer_address),
-            1_500_000_00,  # (15 algo)
+            1_500_000_00,
         ]
 
         app_id = transaction_instance.create_contract(
