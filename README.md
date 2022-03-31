@@ -95,8 +95,9 @@ import 3 testnet accounts to the goal app by running this command:
 ./sandbox goal clerk send -a {amount} -f {provided accounts in goal} -t {imported accounts}
 ```
 
-### For more information on how to use alglorand sandbox visit. [sandox][./sandbox goal clerk send -a 200000000 -f client -t EJNUGTF56QWEQWZGRKGCF7U4QY2UDJ2GXYCCZFSHDFKDLW2XE7MCJNKP7E]
-### For more information on how to use alglorand sandbox. [sandox]()
+For more information on how to use alglorand sandbox visit: 
+
+[sandox](https://developer.algorand.org/docs/clis/goal/goal/)
 
 ## Run the App
  Open a terminal in project directory and run
