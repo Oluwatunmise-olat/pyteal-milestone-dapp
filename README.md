@@ -6,7 +6,8 @@
 
 ### Resources
 [Read about algorand sandbox](https://developer.algorand.org/tutorials/exploring-the-algorand-sandbox/)
-[This tutorail also touches on using algorand sandbox and setting account](https://dappradar.com/blog/introduction-to-algorand-pyteal-smart-signature-development)
+
+[This tutorial also touches on using algorand sandbox and setting account](https://dappradar.com/blog/introduction-to-algorand-pyteal-smart-signature-development)
 
 ## Goal of Project and Concepts Covered.
 
