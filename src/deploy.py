@@ -1,6 +1,7 @@
 import sys
 import time
-from pyteal import TealCompileError, TealInputError, TealTypeError, TealInternalError
+from pyteal import TealInputError, TealCompileError
+from algosdk.error import ABITypeError, AlgodHTTPError, IndexerHTTPError
 from utils.services import WebService, AccountService, transaction_instance
 from utils.time import get_current_timestamp, get_future_timestamp_in_days, get_future_timestamp_in_secs
 from contract import approval_program, clear_program
@@ -38,7 +39,7 @@ class Interface:
         args = [
             WebService.address_to_bytes(client_address),
             WebService.address_to_bytes(freelancer_address),
-            1_500_000,  # (15 algo)
+            1_500_000_00,  # (15 algo)
         ]
 
         app_id = transaction_instance.create_contract(
@@ -127,12 +128,13 @@ def main():
         print(f"Smart Contract Address {smart_contract_address}")
 
         # set up smart contract
+        # This call is made by the contract deployer
         print("======================")
         print("making set up call ...")
         print("======================")
 
         set_up_response = Interface.set_up_call(
-            receiver=smart_contract_address, app_id=application_id, amount=1_500_000, sender=client_address, sender_pk=client_pk)
+            receiver=smart_contract_address, app_id=application_id, amount=1_500_000_00, sender=client_address, sender_pk=client_pk)
 
         print(f"Smart Contract SetUp response {set_up_response}")
 
@@ -140,6 +142,7 @@ def main():
         time.sleep(15)
 
         # submit milestone
+        # This call is made by the freelancer to submit milestone
         print("======================")
         print("making submit call ...")
         print("======================")
@@ -151,6 +154,7 @@ def main():
         time.sleep(15)
 
         # accept call
+        # This call is made by the client to approve submission and release funds
         print("======================")
         print("making accept call ...")
         print("======================")
@@ -159,11 +163,80 @@ def main():
             app_id=application_id, sender_pk=client_pk, sender=client_address, accounts=[freelancer_address])
         print(f"Smart Contract Accept response {accept_response}")
 
+        time.sleep(15)
+
+        # refund call
+
+        # This call is made by the client
+
+        # Note this would not be approved if freelacer has submitted work
+        # and since in our case the freelancer has submited and we approved payment from eescrow to freelancer
+        # it makes sense for it to fail
+
+        # print("======================")
+        # print("making refund call ...")
+        # print("======================")
+
+        # refund_response = Interface.refund_call(
+        #     app_id=application_id, sender_pk=client_pk, sender=client_address, args=["refund"])
+        # print(f"Smart Contract Refund response {refund_response}")
+
+        # time.sleep(15)
+
+        # withdraw call
+
+        # this call is made by the freelancer requesting payment
+        # it would fail if the client has made payment Or
+        # if the altimatum for client approval has not exceeded
+
+        # print("======================")
+        # print("making withdraw call ...")
+        # print("======================")
+
+        # withdraw_response = Interface.withdraw_call(
+        #     app_id=application_id, sender_pk=freelancer_pk, sender=freelancer_address)
+        # print(f"Smart Contract Withdraw response {withdraw_response}")
+
+    except TealInputError as teal_error:
+        _, value, _ = sys.exc_info()
+        print(f"Error in teal code: {value}")
+
+    except TypeError as type_error:
+        _, value, _ = sys.exc_info()
+        print(f"Invalid Teal type: {value}")
+
+    except SyntaxError as syntax_error:
+        _, value, _ = sys.exc_info()
+        print(f"Syntx Error in code: {value}. Check your python code and teal code for possible syntax errors")
+
+
+    except NameError as name_err:
+        _, value, _ =sys.exc_info()
+        print(f"Name Error in code: {value}. Check your python code and teal code for naming error")
+
+    except TealCompileError:
+        _, value, _ = sys.exc_info()
+        print(f"Error compiling teal code to bytes: {value}")
+
+    except AlgodHTTPError as http_err:
+        _, value, _ = sys.exc_info()
+        print(f"Smart Contract Call Not Approved: {value}")
+        print(f"Error code: {http_err.code}")
+
+
     except Exception as e:
-        print(e)
+        print(e.__class__.__name__)
         exc_type, value, traceback = sys.exc_info()
-        # assert exc_type.__name__ == 'NameError'
-        print(e.__class__.__name__, exc_type, value, traceback)
+        # print(e.args[0], e.code)
+        if e.__class__.__name__ == "SyntaxError":
+            print(f"Syntx Error in code: {value}. Check your python code and teal code for possible syntax errors")
+            return
+
+        if e.__class__.__name__ == 'NameError':
+            print(f"Name Error in code: {value}. Check your python code and teal code for naming error")
+            return
+
+        print(value, exc_type)
 
 
 def delete_app(app_id, accounts):
@@ -174,21 +247,8 @@ def delete_app(app_id, accounts):
     del_response = Interface.delete_call(app_id, accounts)
     return del_response
 
-
-""" Error Types
-    1. TealInternalError
-    2. TealTypeError
-    3. TealInputError
-    4. TealCompileError
-"""
-
-# compile pyteal code to teal
-# withdraw case
-# refund case
-# decline case
-
 if __name__ == '__main__':
     main()
 
-    # delete_app(39, accounts=[client_address])
+    # delete_app(130, accounts=[client_address])
 

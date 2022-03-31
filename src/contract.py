@@ -86,22 +86,27 @@ def approval_program():
                 ),
                 Approve()
             ),
+            If(
+                And(
+                    App.globalGet(global_start_date) == Int(0), App.globalGet(global_sent) == Bytes("True")
+                ),
+                Approve()
+            ),
 
 
             If(And(Txn.sender() == App.globalGet(global_client), App.globalGet(
-                global_start_date) != Int(0)))  # we make sure that client has paid to escrow
+                global_start_date) != Int(0)), App.globalGet(global_sent) == Bytes("False"))  # we make sure that client has paid to escrow and has not released funds to freelancer
             .Then(
                 sendFund(Txn.sender(), App.globalGet(
                     global_amount), Txn.sender()),
             ),
 
-            If(And(Txn.sender() == App.globalGet(global_client),
-               App.globalGet(global_start_date) != Int(0)))
+            If(And(Txn.sender() == App.globalGet(global_creator),
+               App.globalGet(global_start_date) != Int(0)), App.globalGet(global_sent) == Bytes("False"))
             .Then(
                 sendFund(Txn.accounts[1], App.globalGet(
                     global_amount), Txn.accounts[1]),
             ),
-
             Approve()
         ])
 
@@ -159,11 +164,9 @@ def approval_program():
                     Txn.application_args.length() == Int(3),
 
                     # assert the start date is less than current date time
-                    App.globalGet(
-                        global_start_date) < Global.latest_timestamp(),
+                    App.globalGet(global_start_date) <= Global.latest_timestamp(),
                     # assert that the enddate is greater than the current date time
-                    App.globalGet(
-                        global_end_date) >= Global.latest_timestamp(),
+                    App.globalGet(global_end_date) > Global.latest_timestamp(),
 
                 )
             ),
@@ -336,7 +339,6 @@ def approval_program():
     return contract_events(
         initialize_contract=initialize_app(),
         delete_contract=delete_app(),
-        # delete_contract=Approve(),
         no_op_contract=Seq([
             Cond(
                 [Txn.application_args[0] == op_set_state, set_state()],
