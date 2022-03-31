@@ -1,3 +1,4 @@
+import sndhdr
 from algosdk.v2client.algod import AlgodClient
 from algosdk import mnemonic, encoding, account
 from algosdk.constants import MIN_TXN_FEE
@@ -87,9 +88,10 @@ class TransactionService:
         txn_id = signed_txn.transaction.get_txid()
         self.algod_client.send_transactions([signed_txn])
 
-        self.wait_for_confirmation(txn_id, 60)
+        self.wait_for_confirmation(txn_id, 15)
 
         txn_response = self.algod_client.pending_transaction_info(txn_id)
+        print(txn_response, "pp")
         application_id = txn_response["application-index"]
         return application_id
 
@@ -140,7 +142,7 @@ class TransactionService:
 
         txn_id = self.algod_client.send_transactions(signed_group)
 
-        self.wait_for_confirmation(txn_id, 60)
+        self.wait_for_confirmation(txn_id, 15)
 
         print(f"Set up application call with transaction_id: {txn_id}")
 
@@ -178,7 +180,7 @@ class TransactionService:
 
         signed_txn = txn.sign(sender_pk)
         txn_id = signed_txn.transaction.get_txid()
-        self.wait_for_confirmation(txn_id, 60)
+        self.wait_for_confirmation(txn_id, 15)
 
         self.algod_client.send_transactions([signed_txn])
         txn_response = self.algod_client.pending_transaction_info(txn_id)
@@ -202,7 +204,7 @@ class TransactionService:
 
         signed_txn = txn.sign(sender_pk)
         txn_id = signed_txn.transaction.get_txid()
-        self.wait_for_confirmation(txn_id, 60)
+        self.wait_for_confirmation(txn_id, 15)
 
         self.algod_client.send_transactions([signed_txn])
         txn_response = self.algod_client.pending_transaction_info(txn_id)
@@ -223,7 +225,7 @@ class TransactionService:
 
         signed_txn = txn.sign(sender_pk)
         txn_id = signed_txn.transaction.get_txid()
-        self.wait_for_confirmation(txn_id, 60)
+        self.wait_for_confirmation(txn_id, 15)
 
         self.algod_client.send_transactions([signed_txn])
 
@@ -246,7 +248,7 @@ class TransactionService:
 
         signed_txn = txn.sign(sender_pk)
         txn_id = signed_txn.transaction.get_txid()
-        self.wait_for_confirmation(txn_id, 60)
+        self.wait_for_confirmation(txn_id, 15)
 
         self.algod_client.send_transactions([signed_txn])
         txn_response = self.algod_client.pending_transaction_info(txn_id)
@@ -270,7 +272,7 @@ class TransactionService:
 
         signed_txn = txn.sign(sender_pk)
         txn_id = signed_txn.transaction.get_txid()
-        self.wait_for_confirmation(txn_id, 60)
+        self.wait_for_confirmation(txn_id, 15)
 
         self.algod_client.send_transactions([signed_txn])
         txn_response = self.algod_client.pending_transaction_info(txn_id)
@@ -280,7 +282,7 @@ class TransactionService:
 
         return txn_id
 
-    def delete_call(self, app_id: int) -> int:
+    def delete_call(self, app_id: int, accounts:list) -> int:
         suggested_params = self.algod_client.suggested_params()
         suggested_params.fee = 2 * MIN_TXN_FEE
         suggested_params.flat_fee = True
@@ -288,14 +290,16 @@ class TransactionService:
         txn = transaction.ApplicationDeleteTxn(
             sender=self.deployer_address,
             index=app_id,
-            sp=suggested_params
+            sp=suggested_params,
+            accounts=accounts,
+
         )
 
         # here the deployer is deleting the application
         signed_txn = txn.sign(self.deployer_private_key)
 
         txn_id = signed_txn.transaction.get_txid()
-        self.wait_for_confirmation(txn_id, 60)
+        self.wait_for_confirmation(txn_id, 15)
 
         self.algod_client.send_transactions([signed_txn])
 

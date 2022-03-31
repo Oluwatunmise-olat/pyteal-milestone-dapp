@@ -36,8 +36,8 @@ class Interface:
 
         # arguments
         args = [
-            client_address,
-            freelancer_address,
+            WebService.address_to_bytes(client_address),
+            WebService.address_to_bytes(freelancer_address),
             1_500_000,  # (15 algo)
         ]
 
@@ -101,8 +101,8 @@ class Interface:
         pass
 
     @staticmethod
-    def delete_call(app_id):
-        return transaction_instance.delete_call(app_id=app_id)
+    def delete_call(app_id, accounts):
+        return transaction_instance.delete_call(app_id=app_id, accounts=accounts)
 
 
 def main():
@@ -161,17 +161,17 @@ def main():
 
     except Exception as e:
         print(e)
-        # exc_type, value, traceback = sys.exc_info()
+        exc_type, value, traceback = sys.exc_info()
         # assert exc_type.__name__ == 'NameError'
-        # print(e.__class__.__name__, exc_type, value, traceback)
+        print(e.__class__.__name__, exc_type, value, traceback)
 
 
-def delete_app(app_id):
+def delete_app(app_id, accounts):
     print("======================")
     print("making delete call ...")
     print("======================")
 
-    del_response = Interface.delete_app(app_id)
+    del_response = Interface.delete_call(app_id, accounts)
     return del_response
 
 
@@ -190,4 +190,5 @@ def delete_app(app_id):
 if __name__ == '__main__':
     main()
 
-    # delete_app()
+    # delete_app(39, accounts=[client_address])
+
