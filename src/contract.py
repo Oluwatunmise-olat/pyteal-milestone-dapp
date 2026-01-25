@@ -66,8 +66,8 @@ def approval_program():
     def delete_app():
         # can only be called by creator of contract (subjective as it can also be called by client)
         # Ideal this isn't how you would want to handle deleting a contract
-        # yo would most likely only want this app deleted if the milestone has not stared or it has ended
-        # but i just implement it this way because i want to clear the amount of apps i have on the deploer address
+        # you would most likely only want this app deleted if the milestone has not stared or it has ended
+        # but I just implement it this way because I want to clear the amount of apps iI have on the deployer address
 
         # send all algo the client address
         # set all global variables to initial state
